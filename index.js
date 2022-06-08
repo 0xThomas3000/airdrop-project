@@ -11,9 +11,6 @@ const wallet = new Keypair(); // Define a "wallet" obj of type "Keypair" into wh
 const publicKey = new PublicKey(wallet._keypair.publicKey);
 const secretKey = wallet._keypair.secretKey;
 
-console.log(publicKey);
-console.log(secretKey);
-
 const getWalletBalance = async () => {
   try {
     const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
@@ -24,8 +21,31 @@ const getWalletBalance = async () => {
   }
 };
 
+const airDropSol = async () => {
+  try {
+    const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
+    // Send 2 Sol into the wallet
+    const fromAirDropSignature = await connection.requestAirdrop(
+      publicKey,
+      2 * LAMPORTS_PER_SOL
+    );
+
+    const latestBlockHash = await connection.getLatestBlockhash();
+
+    await connection.confirmTransaction({
+      blockhash: latestBlockHash.blockhash,
+      lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+      signature: fromAirDropSignature,
+    });
+  } catch (err) {
+    console.error(err);
+  }
+};
+
 const main = async () => {
   await getWalletBalance();
+  await airDropSol();
+  await getWalletBalance(); // Will see the balance value but not in "SOL" instead in "Lamports"
 };
 
 main();
